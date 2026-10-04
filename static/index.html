@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Emotion Classifier</title>
+</head>
+<body>
+    <h1>Emotion Classifier</h1>
+
+    <!-- File Upload Section -->
+    <input type="file" id="imageInput" accept="image/*"><br><br>
+    <button onclick="uploadImage()">Classify Image</button>
+
+    <hr>
+
+    <!-- Results Section -->
+    <h2>Results:</h2>
+    <p id="predictionText">Prediction: </p>
+    <pre id="confidenceText">Confidence: </pre>
+
+    <script>
+        async function uploadImage() {
+            const input = document.getElementById('imageInput');
+            if (input.files.length === 0) {
+                alert("Please select an image first!");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", input.files[0]);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                // Display results on screen
+                document.getElementById('predictionText').innerText = "Prediction: " + data.prediction;
+                document.getElementById('confidenceText').innerText = JSON.stringify(data.confidence, null, 2);
+            } catch (error) {
+                alert("Error connecting to backend server!");
+            }
+        }
+    </script>
+</body>
+</html>
+
+    
