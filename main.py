@@ -3,7 +3,7 @@ import shutil
 from fastapi import FastAPI, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
-from rf_predict import EmotionClassifier
+from model_predict import EmotionClassifier
 
 app = FastAPI(title="Emotion Classifier API")
 
@@ -24,11 +24,13 @@ async def predict_emotion(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
 
     try:
-        prediction = classifier.get_result(temp_path)
-        percentages = classifier.prediction_percentage(temp_path)
+        top_emotion_1, top_emotion_2, scores = classifier.get_result(temp_path)
+        
         return {
-            "prediction": prediction,
-            "confidence": percentages
+            "prediction": f"Random Forest: {top_emotion_1.title()} | Neural Network: {top_emotion_2.title()}",
+            "random_forest_prediction": top_emotion_1,
+            "neural_network_prediction": top_emotion_2,
+            "confidence": scores
         }
     finally:
         if os.path.exists(temp_path):

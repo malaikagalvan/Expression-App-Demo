@@ -1,21 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Emotion Classifier</title>
+    <title>Emotion AI</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Emotion Classifier</h1>
+    <h1>Emotion AI</h1>
 
     <!-- File Upload Section -->
-    <input type="file" id="imageInput" accept="image/*"><br><br>
-    <button onclick="uploadImage()">Classify Image</button>
+    <p class="small-text">Which image do you want to classify?</p>
+    <div class="upload">
+        <input type="file" id="imageInput" accept="image/*">
+        <button onclick="uploadImage()">Classify Image</button>
+    </div>
+    
 
     <hr>
 
     <!-- Results Section -->
     <h2>Results:</h2>
-    <p id="predictionText">Prediction: </p>
-    <pre id="confidenceText">Confidence: </pre>
+    <p class="input" id="predictionText">Prediction: </p>
+    <pre class="output" id="confidenceText">Confidence: </pre>
 
     <script>
         async function uploadImage() {
