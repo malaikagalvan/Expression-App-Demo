@@ -2,57 +2,205 @@
 <html>
 <head>
     <title>Emotion AI</title>
-    <link rel="stylesheet" href="/static/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>Emotion AI</h1>
+    <div class="upload-screen-section">
+        <h1>Emotion AI</h1>
 
-    <!-- File Upload Section -->
-    <p class="small-text">Which image do you want to classify?</p>
-    <div class="upload">
-        <input type="file" id="imageInput" accept="image/*">
-        <button onclick="uploadImage()">Classify Image</button>
+        <!-- File Upload Section -->
+        <p class="small-text">Which image do you want to classify?</p>
+
+        <div class="style-upload">
+            <input type="file" id="imageInput" accept="image/*" onchange="showFileName()"><br>
+            <!--trick 'input' to use this for styling-->
+            <label for="imageInput"><span id="uploadLabelText">Add Your Image Here</span><i class="file-types">Acceptable File Types: JPG, PNG</i></label>
+        </div>
+        
+        <button class="style-button" id="classifyBtn" onclick="uploadImage()">Classify Image</button>
     </div>
+        
     
 
-    <hr>
+    <!-- Temporary loader -->
+    <div id="previewContainer" class="image-box" style="display: none;">
+        <div id="loader" class="loader"></div>
+    </div>
 
-    <!-- Results Section -->
-    <h2>Results:</h2>
-    <p class="input" id="predictionText">Prediction: </p>
-    <pre class="output" id="confidenceText">Confidence: </pre>
+    <!--Results-->
+    <div id="resultsContainer" style="display: none; width: 100%; max-width: 800px; margin: 0 auto;">
+        <h2>Results</h2>
+        
+        <!-- This container splits the layout into two columns -->
+        <div class="model-split-grid">
+            
+            <!-- LEFT COLUMN: RANDOM FOREST -->
+            <div class="model-column rf-column">
+                <h3>Random Forest</h3>
+                <p class="prediction-text" id="rfPredictionText">Prediction: </p>
+                <div id="rfBarsContainer"></div>
+            </div>
+            
+            <!-- RIGHT COLUMN: NEURAL NETWORK -->
+            <div class="model-column nn-column">
+                <h3>Neural Network</h3>
+                <p class="prediction-text" id="nnPredictionText">Prediction: </p>
+                <div id="nnBarsContainer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    
 
-    <script>
-        async function uploadImage() {
-            const input = document.getElementById('imageInput');
-            if (input.files.length === 0) {
-                alert("Please select an image first!");
-                return;
-            }
+    function showFileName() {
+        const input = document.getElementById('imageInput');
+        const labelText = document.getElementById('uploadLabelText');
+        
+        // Check if the user actually selected a file
+        if (input.files && input.files.length > 0) {
+            // Get the name of the first file and update the text
+            labelText.textContent = "Selected: " + input.files[0].name;
 
-            const formData = new FormData();
-            formData.append("file", input.files[0]);
-
-            try {
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                // Display results on screen
-                document.getElementById('predictionText').innerText = "Prediction: " + data.prediction;
-                document.getElementById('confidenceText').innerText = JSON.stringify(data.confidence, null, 2);
-            } catch (error) {
-                alert("Error connecting to backend server!");
-            }
+        } else {
+            // Reset to default text if they cancel the selection window
+            labelText.textContent = "Add Your Image Here";
         }
-    </script>
-</body>
-</html>
+    }
+    async function uploadImage() {
+        const input = document.getElementById('imageInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const loader = document.getElementById('loader');
+        const resultsContainer = document.getElementById('resultsContainer');
 
+        const classifyBtn = document.getElementById('classifyBtn');
+        
+        const rfBars = document.getElementById('rfBarsContainer');
+        const nnBars = document.getElementById('nnBarsContainer');
+
+        if (input.files.length === 0) {
+            alert("Please select an image first!");
+            return;
+        }
+
+        // 1. Enter Loading State
+
+        classifyBtn.disabled = true; 
+        classifyBtn.innerHTML = 'Thinking... <span class="btn-spinner"></span>';
+
+        previewContainer.style.display = "flex";
+        resultsContainer.style.display = "none";
+        loader.style.display = "block";
+        rfBars.innerHTML = ""; 
+        nnBars.innerHTML = ""; 
+
+        const formData = new FormData();
+        formData.append("file", input.files[0]);
+
+        try {
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error("Server returned a bad status code");
+            }
+
+            const data = await response.json();
+
+            // 2. Render Top Prediction Headings
+            document.getElementById('rfPredictionText').innerHTML = `Emotion: <strong>${data.random_forest_prediction.toUpperCase()}</strong>`;
+            document.getElementById('nnPredictionText').innerHTML = `Emotion: <strong>${data.neural_network_prediction.toUpperCase()}</strong>`;
+
+            // 3. Extract split dictionaries directly from backend
+            const confidences = data.confidence; 
+            
+            function buildBars(modelScores, targetContainer, colorClass) {
+                if (!modelScores || typeof modelScores !== 'object') {
+                    console.error("Invalid scores object structured:", modelScores);
+                    return;
+                }
+
+                for (const [emotion, value] of Object.entries(modelScores)) {
+                    const scoreNum = parseFloat(value);
+                    if (isNaN(scoreNum)) continue;
+
+                    // Round the value cleanly since it arrives as a number like 45.67
+                    const percentage = Math.round(scoreNum); 
+                    
+                    const row = document.createElement('div');
+                    row.className = 'bar-row';
+                    row.innerHTML = `
+                        <div class="bar-labels">
+                            <span class="emotion-name">${emotion.toUpperCase()}</span>
+                            <span class="emotion-percent">${percentage}%</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill ${colorClass}" style="width: 0%"></div>
+                        </div>
+                    `;
+                    targetContainer.appendChild(row);
+
+                    setTimeout(() => {
+                        const fill = row.querySelector('.bar-fill');
+                        if (fill) {
+                            fill.style.width = Math.min(percentage, 100) + '%';
+                        }
+                    }, 50);
+                }
+            }
+
+            // 4. Send separated models into their respective layout tracks explicitly
+            if (confidences && confidences.random_forest && confidences.neural_network) {
+                buildBars(confidences.random_forest, rfBars, 'rf-fill');
+                buildBars(confidences.neural_network, nnBars, 'nn-fill');
+            } else {
+                console.error("Confidence data key mismatch from python:", confidences);
+            }
+
+            classifyBtn.disabled = false;
+            classifyBtn.innerHTML = 'Classify Image';
+
+            // 5. Hide loading screen framework and show results dashboard
+            loader.style.display = "none";
+            previewContainer.style.display = "none";
+            resultsContainer.style.display = "block";
+
+            /*smooth scroll*/
+            setTimeout(() => {
+                resultsContainer.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }, 100);
+
+        
+        } catch (error) {
+            console.error("Connection Error Trace:", error);
+            alert("Error connecting to backend server!");
+
+            classifyBtn.disabled = false;
+            classifyBtn.innerHTML = 'Classify Image';
+
+            previewContainer.style.display = "none";
+            resultsContainer.style.display = "none";
+        }
+    }
+</script>
+
+<footer class="style-footer">
+    <div class="style-links">
+        <a href="https://github.com/malaikagalvan/Capstone-DATA4381">Project Documentation</a><br>
+        <a href="https://www.kaggle.com/datasets/msambare/fer2013/code">Dataset Source</a>
+    </div>
+    <p>&copy; 2026 Emotion AI. This project was created for educational and demonstrative purposes as part of a university course. All rights reserved.</p>
     
+</footer>
+
+</body>
+
+</html>

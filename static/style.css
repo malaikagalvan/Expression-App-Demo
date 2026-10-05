@@ -1,16 +1,40 @@
-body {
-    display: flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    height: 100vh;
+html {
+    min-height: 100vh;
 
     background-color:rgb(255, 255, 255);
     background-image: linear-gradient(to bottom, #ffffff 40%, #ffd6fa);
+
+    background-attachment: fixed;
+    
+    scroll-behavior: smooth;
+}
+body {
+    display: flex;
+    flex-direction:column;
+    align-items:center;
+    
+    padding: 40px 0px; /*Keep elements away from the edge of the screen*/
+    box-sizing:border-box; /*Prevent padding from breaking scrolling behaviors*/
+
+    
+
     font-family: "Fira Sans", sans-serif;
 
+    /*Allow hidden background layer to anchor to the page*/
+    position: relative;
+    margin: 0; /*Remove default margin*/
+}
+/*new wrapper class*/
+.upload-screen-section {
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content:center;
+    min-height: calc(100vh - 80px); /* Fills exactly one full screen height, taking padding into account */
+    width:100%;
 }
 h1 {
+    color:#1b1b1b;
     font-weight: 600;
     font-size: 90px;
     
@@ -20,11 +44,214 @@ h1 {
 
 }
 .small-text {
+    color:#1b1b1b;
     font-weight: 300;
-    font-size: 18px;
+    font-size: 20px;
     margin-top:5px;
 
 }
-.upload{
-    display:inline-block;
+#imageInput {
+    display:none;
+}
+.style-upload label{
+    color:#7c7c7c;
+    font-family: "Fira Sans", sans-serif;
+    font-size:18px;
+    font-weight: 300;
+
+    display: flex;
+    flex-direction:column; /*allow items to stack vertically*/
+
+    /* Center the text bc the body flex centering doesnt pass to child elements */
+    align-items: center; 
+    justify-content: center;
+    text-align: center;
+
+
+    /* background-color:rgba(233, 235, 234, 0.421); */
+    background-color:white;
+
+    width: 600px;
+    height: 200px;
+    border: 2px dashed #4a494992;
+    border-radius: 10px;
+
+    /*Outline the button*/
+    outline: 25px solid white;
+
+    cursor:pointer;
+}
+/*darken the background on hover*/
+.style-upload label:hover {
+    background-color:rgb(248, 246, 248);
+    border-color:#838383;
+}
+.style-upload label .file-types {
+    display:block;
+    margin-top:8px;
+    font-size: 15px;
+    color:#b3b3b3;
+}
+.style-button {
+    background-color: #f392e7;
+    border: none;
+    border-radius: 15px;
+    /* box-shadow: 0px 4px 5px rgb(255, 150, 211); */
+
+    padding: 12px 30px;
+    cursor:pointer;
+
+    color:#1e1d1d;
+    font-family: "Fira Sans", sans-serif;
+    font-size:15px;
+    font-weight: 400;
+
+    margin-top: 60px;
+    /* outline: 12px solid #f392e7; */
+}
+.style-button:hover {
+    transform: translateY(-3px)
+}
+/*the results*/
+h2 {
+    text-align:center;
+    margin-top: 40px;
+    font-family: "Fira Sans", sans-serif;
+    font-size: 40px;
+}
+/* --- SPLIT GRID DISPLAY LAYOUT --- */
+.model-split-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Splitting right down the center into 2 columns */
+    gap: 30px;                     /* Breathing room space between columns */
+    width: 100%;
+    margin-top: 20px;
+}
+
+.model-column {
+    background: rgba(255, 255, 255, 0.4);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.model-column h3 {
+    margin-top: 0;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+    padding-bottom: 8px;
+    font-family: "Fira Sans", sans-serif;
+    font-weight:500;
+
+}
+
+.prediction-text {
+    font-size: 16px;
+    margin: 15px 0;
+    font-family: "Fira Sans", sans-serif;
+    font-weight:200;
+
+}
+
+/* --- THE SHARED METRIC TRACKS --- */
+.bar-row {
+    margin-bottom: 12px;
+}
+.bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    font-family: "Fira Sans", sans-serif;
+    margin-bottom: 4px;
+}
+.bar-track {
+    width: 100%;
+    height: 15px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 6px;
+    overflow: hidden;
+}
+.bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    width: 0%;
+    transition: width 1.5s cubic-bezier(0.1, 1, 0.1, 1);
+}
+
+/* --- SHADES OF PINK SEPARATION --- */
+/* Random Forest uses a classic Soft Pink */
+.bar-fill.rf-fill {
+    background-color: #f392e7; 
+}
+
+/* Neural Network uses a deeper, richer Magenta-Pink */
+.bar-fill.nn-fill {
+    background-color: #d147be; 
+}
+
+/* Responsive adjustment: stack them on small mobile viewports */
+@media (max-width: 600px) {
+    .model-split-grid {
+        grid-template-columns: 1fr;
+    }
+}
+/*scroll*/
+#resultsContainer {
+    min-height: auto; /*Fit on any screen*/
+    scroll-margin-top:20px;
+    margin-bottom: 50vh;
+
+    width: 100%;
+    max-width: 800px;
+}
+#uploadLabelText { 
+    color:#7c7c7c;
+    font-family: "Fira Sans", sans-serif;
+    font-weight:300;
+    font-size:18px;
+}
+/*loading thing*/
+.btn-spinner {
+    width: 10px;
+    height: 10px;
+    background-color: rgba(255, 243, 254, 0.538);
+    border-radius: 50%;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulseGlow 1s ease-in-out infinite;
+    vertical-align: middle;
+    margin-left: 8px;                      /* Tiny padding spacing separation from text string */
+}
+
+@keyframes pulseGlow {
+    0% {opacity: 0.2; transform: scale(0.8);}
+    50% {opacity: 1.0; transform: scale(1.1);}
+    100% {opacity: 0.2; transform: scale(0.8); }
+}
+.style-footer {
+    display: inline-block;
+    padding: 40px;
+    font-family: "Fira Sans", sans-serif;
+    font-weight: 200;
+    font-size: 11px;
+}
+.style-links {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 15px;
+}
+.style-links a{
+    display: inline-block;
+    text-decoration:none;
+    color:#f392e7;
+    font-weight: 400;
+    font-family: "Fira Sans", sans-serif;
+    font-size: 12px;
+}
+.style-links a:hover {
+    cursor: pointer;
+}
+.style-links p {
+    font-family: "Fira Sans", sans-serif;
+    font-size: 10px;
 }

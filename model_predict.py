@@ -80,12 +80,12 @@ class EmotionClassifier:
         # Model 1 Predictions
         probs_1 = self.model_1.predict_proba(img_flat_rf)[0]
         top_idx_1 = int(np.argmax(probs_1))
-        scores_1 = {name: f"{prob * 100:.1f}%" for name, prob in zip(self.class_names, probs_1)}
+        scores_1 = {name: float(prob * 100) for name, prob in zip(self.class_names, probs_1)}
 
         # Model 2 Predictions (using img_flat_nn)
         probs_2 = self.predict_model_2(img_flat_nn)
         top_idx_2 = int(np.argmax(probs_2))
-        scores_2 = {name: f"{prob * 100:.1f}%" for name, prob in zip(self.class_names, probs_2)}
+        scores_2 = {name: float(prob * 100) for name, prob in zip(self.class_names, probs_2)}
 
         return (
             self.class_names[top_idx_1], 
