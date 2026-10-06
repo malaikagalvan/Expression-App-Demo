@@ -255,3 +255,31 @@ h2 {
     font-family: "Fira Sans", sans-serif;
     font-size: 10px;
 }
+/* 1. Hide the container by default and set up the centering layout */
+.image-box {
+    display: none;            /* Kept hidden until JS adds the '.visible' class */
+    width: 100%;              /* Forces the container to take full width */
+    justify-content: center;   /* Perfectly centers horizontal items */
+    align-items: center;       /* Perfectly centers vertical items */
+    margin: 20px 0 30px 0;    /* Adds clean space top and bottom */
+}
+
+/* 2. When JS adds the '.visible' class, turn on the flex box to center the image */
+.image-box.visible {
+    display: flex !important;
+}
+
+/* 3. Style and crop the image directly */
+#selectedImagePreview {
+    display: block;
+    width: 300px;
+    height: 300px;
+    object-fit: cover;         /* Crisp square center-cropping */
+    
+    /* Your Pink Border styling */
+    border: 4px solid pink;    
+    border-radius: 12px;
+    
+    /* Clean modern shadow depth */
+    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.08); 
+}
